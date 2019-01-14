@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Телефонный справочник</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+
+<style>
+    #margin1 {
+        margin: 0px 40px 0px 40px;
+ /* Задаем отступы */
+   }
+    input.form-control {
+     width: 700px; /* Ширина поля в пикселах */
+     margin-bottom: 10px;
+    } 
+</style>
+ 
+</head>
+<body>
+<div id=margin1>
+    <h2>Телефонный справочник-онлайн для сотрудников предприятий и корпоративных порталов.</h2>
+    <form name="userForm">
+        <input type="hidden" name="id" value="0" />
+        <div class="form-group">
+            <b>ФИО:</b>
+            <input class="form-control" name="name" />
+            <b>Должность:</b>
+            <input class="form-control" name="beruf" />
+            <b>Номер телефона:</b>
+            <input class="form-control" name="phone" />
+        </div>      
+        <div class="panel-body">
+            <b>Кнопки ввода информации:</b>
+            <button type="submit" class="btn btn-lg btn-primary">Сохранить</button>
+            <a id="reset" class="btn btn-lg btn-primary">Сбросить</a>
+        </div>
+    </form>
+    <table class="table table-condensed table-striped table-bordered table-hover">
+        <thead><tr><th>Номер телефона</th><th>Должность</th><th>ФИО</th><th>Редактировать данные</th></tr></thead>
+        <tbody>
+        </tbody>
+    </table>
+  </div>
+
+    <script>
+        // Получение всех пользователей
+        function GetUsers() {
+            $.ajax({
+                url: "/api/users",
+                type: "GET",
+                contentType: "application/json",
+                success: function (users) {
+                    var rows = "";
+                    $.each(users, function (index, user) {
+                        // добавляем полученные элементы в таблицу
+                        rows += row(user);
+                    })
+                    $("table tbody").append(rows);
+                 }
+            });
+        }
+        // Получение одного пользователя
+        function GetUser(id) {
+            $.ajax({
+                url: "/api/users/"+id,
+                type: "GET",
+                contentType: "application/json",
+                success: function (user) {
+                    var form = document.forms["userForm"];
+                    form.elements["id"].value = user._id;
+                    form.elements["name"].value = user.name;
+                    form.elements["beruf"].value = user.beruf;
+                    form.elements["phone"].value = user.phone;
+                }
+            });
+        }
+        // Добавление пользователя
+        function CreateUser(userName, userBeruf, userPhone) {
+            $.ajax({
+                url: "api/users",
+                contentType: "application/json",
+                method: "POST",
+                data: JSON.stringify({
+                    name: userName,
+                    beruf: userBeruf,
+                    phone: userPhone
+                }),
+                success: function (user) {
+                    reset();
+                    console.log(user);
+                    $("table tbody").append(row(user));
+                }
+            })
+        }
+        // Изменение пользователя
+        function EditUser(userId, userName, userBeruf, userPhone) {
+            $.ajax({
+                url: "api/users",
+                contentType: "application/json",
+                method: "PUT",
+                data: JSON.stringify({
+                    id: userId,
+                    name: userName,
+                    beruf: userBeruf,
+                    phone: userPhone
+                }),
+                success: function (user) {
+                    reset();
+                    console.log(user);
+                    $("tr[data-rowid='" + user._id + "']").replaceWith(row(user));
+                }
+            })
+        }
+  
+        // сброс формы
+        function reset() {
+            var form = document.forms["userForm"];
+            form.reset();
+            form.elements["id"].value = 0;
+        }
+  
+        // Удаление пользователя
+        function DeleteUser(id) {
+            $.ajax({
+                url: "api/users/"+id,
+                contentType: "application/json",
+                method: "DELETE",
+                success: function (user) {
+                    console.log(user);
+                    $("tr[data-rowid='" + user._id + "']").remove();
+                }
+            })
+        }
+        // создание строки для таблицы
+        var row = function (user) {
+            return "<tr data-rowid='" + user._id + "'><td>" + user.phone + "</td>" +
+                   "<td>" + user.beruf + "</td> <td>" + user.name + "</td>" +
+                   "<td><a class='editLink' data-id='" + user._id + "'>Изменить</a> | " +
+                    "<a class='removeLink' data-id='" + user._id + "'>Удалить</a></td></tr>";
+        }
+        // сброс значений формы
+        $("#reset").click(function (e) {
+  
+            e.preventDefault();
+            reset();
+        })
+  
+        // отправка формы
+        $("form").submit(function (e) {
+            e.preventDefault();
+            var id = this.elements["id"].value;
+            var name = this.elements["name"].value;
+            var beruf = this.elements["beruf"].value;
+            var phone = this.elements["phone"].value;
+            if (id == 0)
+                CreateUser(name, beruf, phone);
+            else
+                EditUser(id, name, beruf, phone);
+        });
+  
+        // нажимаем на ссылку Изменить
+        $("body").on("click", ".editLink", function () {
+            var id = $(this).data("id");
+            GetUser(id);
+        })
+        // нажимаем на ссылку Удалить
+        $("body").on("click", ".removeLink", function () {
+            var id = $(this).data("id");
+            DeleteUser(id);
+        })
+  
+        // загрузка пользователей и фона
+        GetUsers();
+        $('body').css('background-color', 'LightCyan');
+        
+    </script>
+</body>
+</html>
