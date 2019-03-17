@@ -5,6 +5,8 @@
 
 https://blog.colobridge.net/2018/07/database_management_systems_who_is_the_most_popular_and_secure/
 
+http://docs.sequelizejs.com/
+
 В интернете имеется аналог телефонной базы для примера:
 
 https://phonebook-app.com/
